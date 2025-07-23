@@ -1,6 +1,6 @@
 def sast_section(team_repos, sast_vulns,sheet):
     start_col = 33  # column AF
-    severity_order = ["critical", "High", "Medium", "Low", "None"]
+    severity_order = ["Critical", "High", "Medium", "Low", "None"]
 
     row = create_merged_cell(sheet, 1, start_col, start_col + len(severity_order),
                              "Gitlab SAST SCAN RESULTS", "a8d7b2", 14)
