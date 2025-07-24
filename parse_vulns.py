@@ -1,30 +1,39 @@
 import json
 import os 
+from utils.repo_utils import extract_repo_from_location
 
-def parse_vulns(json_data):
-    print("parsing vulnerability from the sast json file")
 
-    repo_vulns = {}
+from utils.repo_utils import extract_repo_from_location
 
-    for run in json_data.get("runs", []):
-        for result in run.get("results", []):
-            props = result.get("properties", {})
-            severity = props.get("severity", "None").capitalize()
+def parse_vulns(sast_data):
+    """
+    Parses SARIF-formatted SAST data and adds 'repo' extracted from location.
+    :param sast_data: Parsed JSON from the SARIF file
+    :return: List of parsed vulnerabilities, each with a 'repo' field
+    """
+    vulns = []
 
-            # get file location 
-            try:
-                location = result["location"][0]["physicalLocation"]["artifactLocation"]["uri"]
-            except (KeyError, IndexError):
-                location = "Unknownfile"
+    runs = sast_data.get("runs", [])
+    for run in runs:
+        results = run.get("results", [])
+        for result in results:
+            locations = result.get("locations", [])
+            if not locations:
+                continue
 
-            if location not in repo_vulns:
-                repo_vulns[location] = {}
+            location_info = locations[0].get("physicalLocation", {}).get("artifactLocation", {}).get("uri", "")
+            severity = result.get("properties", {}).get("securitySeverity", "None")
+            message = result.get("message", {}).get("text", "")
 
-            if severity not in repo_vulns[location]:
-                repo_vulns[location][severity] = 0
+            repo = extract_repo_from_location(location_info)
 
-            repo_vulns[location][severity] += 1
+            vulns.append({
+                "location": location_info,
+                "severity": severity,
+                "message": message,
+                "repo": repo
+            })
 
-    return repo_vulns
+    return vulns
 
 
